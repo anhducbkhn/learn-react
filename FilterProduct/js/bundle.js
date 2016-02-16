@@ -53,8 +53,18 @@ var ProductTable = React.createClass({
     render: function () {
         var rows = [];
         var lastCategory = null;
-        this.props.products.forEach(function (product) {
+        var _filterText = this.props.filterText,
+            _inStockOnly = this.props.inStockOnly;
 
+        console.log('test');
+        console.log(this.props);
+        console.log(this.props.filterText);
+        console.log(this.props.inStockOnly);
+
+        this.props.products.forEach(function (product) {
+            if (product.name.indexOf(_filterText) === -1 || !product.stocked && _inStockOnly) {
+                return;
+            }
             if (product.category !== lastCategory) {
                 rows.push(React.createElement(ProductCategoryRow, { category: product.category, key: product.category }));
             }
@@ -98,15 +108,29 @@ var ProductTable = React.createClass({
 var SearchBar = React.createClass({
     displayName: 'SearchBar',
 
+    handleChange: function () {
+        this.props.onUserInput(this.refs.filterTextInput.value, this.refs.inStockOnly.checked);
+    },
     render: function () {
         return React.createElement(
             'form',
             null,
-            React.createElement('input', { type: 'text', placeholder: 'Search...' }),
+            React.createElement('input', {
+                type: 'text',
+                placeholder: 'Search...',
+                value: this.props.filterText,
+                ref: 'filterTextInput',
+                onChange: this.handleChange
+            }),
             React.createElement(
                 'p',
                 null,
-                React.createElement('input', { type: 'checkbox' }),
+                React.createElement('input', {
+                    type: 'checkbox',
+                    checked: this.props.inStockOnly,
+                    ref: 'inStockOnly',
+                    onChange: this.handleChange
+                }),
                 ' ',
                 'Only show products in stock'
             )
@@ -117,12 +141,32 @@ var SearchBar = React.createClass({
 var FilterableProductTable = React.createClass({
     displayName: 'FilterableProductTable',
 
+    getInitialState: function () {
+        return {
+            filterText: 'xxx',
+            inStockOnly: false
+        };
+    },
+    handleUserInput: function (filterText, inStockOnly) {
+        this.setState({
+            filterText: filterText,
+            inStockOnly: inStockOnly
+        });
+    },
     render: function () {
         return React.createElement(
             'div',
             null,
-            React.createElement(SearchBar, null),
-            React.createElement(ProductTable, { products: this.props.products })
+            React.createElement(SearchBar, {
+                filterText: this.state.filterText,
+                inStockOnly: this.state.inStockOnly,
+                onUserInput: this.handleUserInput
+            }),
+            React.createElement(ProductTable, {
+                products: this.props.products,
+                filterText: this.state.filterText,
+                inStockOnly: this.state.inStockOnly
+            })
         );
     }
 });
